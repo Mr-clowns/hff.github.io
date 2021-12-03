@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body{
+      margin: 0;
+      overflow: hidden;
+    }
+    #rain{
+      display: block;
+      background-color: #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="rain"></canvas>
+  <script>
+    //获取canvas元素
+      const canvas = document.querySelector('#rain');
+      //设置canvas元素宽高的函数
+      var wX, wY;
+      ~~function setSize() {
+        //监控窗口发生变化时自动调用setSize函数
+        window.onresize = arguments.callee;
+        //获取浏览器窗口宽高
+        wX = window.innerWidth;
+        wY = window.innerHeight;
+        //给canvas设置宽高
+        canvas.width = wX;
+        canvas.height = wY;
+      }();
+      //获取绘制区域(相当于画笔,可在canvas中任意位置绘制图形)
+      var ctx = canvas.getContext('2d');
+
+      //随机产生两个数之间随机数
+      function random(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+      //生成雨滴的构造函数
+      function Rain() { };
+      //添加原型方法
+      Rain.prototype = {
+        init: function () {
+          this.x = random(0, wX);//雨滴横坐标
+          this.y = 0;//雨滴纵坐标默认从最上方下落
+          this.v = random(3, 4);//雨滴每秒下落的速度
+          this.h = random(0.9 * wY, wY);//下落到窗口高度的90%~100%
+          this.r = 1;//雨滴绽放的初始半径
+          this.vr = 0.4;//半径扩大的速度
+        },
+        draw: function () {
+          if (this.y < this.h) {//判断是否在90%~100%之间
+            ctx.beginPath();                    //抬笔作画
+            ctx.fillStyle = '#666';             //内容实心用颜色填充
+            ctx.fillRect(this.x, this.y, 4, 8);    //画矩形小雨滴
+          } else {//不在区间则以下落到地绽放成圆
+            ctx.beginPath();
+            ctx.strokeStyle = '#666';
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        },
+        move: function () {
+          if (this.y < this.h) {//下落
+            this.y += this.v;//每秒下落3~4滴的距离
+          } else {//绽放成圆
+            if (this.r < 35) {
+              this.r += this.vr;
+            } else {
+              this.init();
+            }
+          }
+          this.draw();//移动的雨滴画出来
+        }
+      }
+
+      //生成的雨滴要添加动画为方便找到存在数组中
+      var aRain = [];
+      //创造雨滴函数
+      function createRain(num) {
+        for (var i = 0; i < num; i++) {
+          setTimeout(function () {//每隔200毫秒生成一个
+            var rain = new Rain();
+            rain.init();
+            rain.draw();
+            aRain.push(rain);
+          }, 200 * i)
+        }
+      }
+      createRain(50);
+
+      //用定时器画帧形成动画
+      setInterval(function () {
+        // ctx.clearRect(0,0,wX,wY);//擦除上一个图形(下雪的感觉)
+        // 这里不是擦除雨滴效果是加蒙版达到渐变效果
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        ctx.fillRect(0, 0, wX, wY);
+        for (var item of aRain) {
+          item.move();
+        }
+      }, 1000 / 144);//根据自己屏幕刷新频率设置(此处是144HZ)
+    
+  </script>
+</body>
+</html>
